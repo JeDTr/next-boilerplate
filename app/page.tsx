@@ -1,9 +1,33 @@
 import Image from "next/image";
 import styles from "./page.module.css";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth()
+
+  console.log('session', session)
+
+  if (!session?.user) return null
+
+  const userResponse = await /* providing accessToken in bearer */
+  fetch('https://dummyjson.com/auth/me', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${session.user.accessToken}`, // Pass JWT via Authorization header
+    }, 
+    credentials: 'include' // Include cookies (e.g., accessToken) in the request
+  })
+
+  const user = await userResponse.json()
+
+  if (!user.firstName && !user.lastName) {
+    redirect('/signin')
+  }
+
   return (
     <div className={styles.page}>
+      <h1>Welcome to {user.firstName} {user.lastName}</h1>
       <main className={styles.main}>
         <Image
           className={styles.logo}
